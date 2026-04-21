@@ -15,10 +15,10 @@ app.use(cors());
 app.use(express.json());
 
 const dbConfig = {
-    host: 'localhost',
-    user: 'root',
+    host: 'tiusr4pl.cuc-carrera-ti.ac.cr',
+    user: 'JoanMoraR',
     password: 'BerserkCR21.',
-    database: 'losprimosdetailing_db',
+    database: 'losprimosdetailing',
     connectionLimit: 10
 };
 
