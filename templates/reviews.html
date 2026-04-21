@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Reseñas - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Reseñas de Clientes</h2>
+        <p class="subtitulo">Lo que dicen de nuestro trabajo</p>
+    </div>
+</header>
+
+<section class="dejar-reseña"
+    style="margin-bottom: 3rem; background: white; padding: 2.5rem; border-radius: var(--radio-medio); box-shadow: var(--sombra-suave);">
+    <h3 style="margin-bottom: 1.5rem;">Danos tu opinión</h3>
+    <form method="POST" class="formulario-vertical">
+        <label>Servicio calificado</label>
+        <select name="service_id" required>
+            <option value="">Selecciona el servicio...</option>
+            {% for service in services %}
+            <option value="{{ service.id }}">{{ service.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Calificación</label>
+        <div class="estrellas-calificacion" style="justify-content: flex-start; margin-bottom: 1.5rem;">
+            <input type="radio" name="rating" value="5" id="est5"><label for="est5">★</label>
+            <input type="radio" name="rating" value="4" id="est4"><label for="est4">★</label>
+            <input type="radio" name="rating" value="3" id="est3"><label for="est3">★</label>
+            <input type="radio" name="rating" value="2" id="est2"><label for="est2">★</label>
+            <input type="radio" name="rating" value="1" id="est1"><label for="est1">★</label>
+        </div>
+
+        <label>Tu comentario</label>
+        <textarea name="comment" placeholder="Cuéntanos tu experiencia..." rows="4" required></textarea>
+
+        <button type="submit" class="btn-primario">Publicar Reseña</button>
+    </form>
+</section>
+
+<section class="lista-reseñas"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for review in reviews %}
+    <div class="tarjeta-premium" style="display: flex; flex-direction: column;">
+        <div class="cabecera-reseña">
+            <strong style="color: var(--primario);">{{ review.author.name }}</strong>
+            <span class="calificacion-reseña">
+                {% for i in range(review.rating) %}★{% endfor %}
+            </span>
+        </div>
+        <p class="servicio-reseñado"
+            style="font-size: 0.85rem; font-weight: 700; color: var(--primario-claro); margin-bottom: 1rem; text-transform: uppercase;">
+            {{ review.service.name }}</p>
+        <p style="font-size: 0.95rem; color: var(--texto-atenuado); font-style: italic;">"{{ review.comment }}"</p>
+        <span style="font-size: 0.75rem; color: #ccc; margin-top: auto; padding-top: 1rem;">Publicado el {{
+            review.created_at.strftime('%d/%m/%Y') }}</span>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+        <p style="color: var(--texto-atenuado);">Aún no hay reseñas publicadas.</p>
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}

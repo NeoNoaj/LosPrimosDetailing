@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <a href="{{ url_for('main.list_services') }}" class="enlace-volver">← Volver al Catálogo</a>
+</header>
+
+<section class="detalle-producto-seccion">
+    <div class="tarjeta-premium layout-detalle">
+        <div class="visual-detalle">
+            <img src="{{ product.image_url or 'https://via.placeholder.com/600x400?text=Producto' }}"
+                alt="{{ product.name }}">
+        </div>
+        <div class="info-detalle">
+            <p class="etiqueta-categoria">
+                {% if product.category == 'service' %}Servicio
+                {% elif product.category == 'product' %}Producto
+                {% else %}{{ product.category|capitalize }}{% endif %}
+            </p>
+            <h2>{{ product.name }}</h2>
+            <p class="precio-detalle">₡{{ product.price }}</p>
+
+            <div class="descripcion-detalle">
+                <h3 style="color: var(--primario); margin-bottom: 1rem;">Descripción</h3>
+                <p style="color: var(--texto-atenuado);">{{ product.description or 'No hay descripción disponible para
+                    este servicio.' }}</p>
+            </div>
+
+            <div style="margin-top: auto; padding-top: 2rem;">
+                {% if product.category == 'service' %}
+                <a href="{{ url_for('main.quotes') }}" class="btn-primario">Solicitar Cotización</a>
+                {% else %}
+                <button class="btn-primario">Agregar al Carrito</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

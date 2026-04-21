@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Configurar Autenticador - LosPrimos{% endblock %}
+
+{% block content %}
+<div class="envoltorio-autenticacion">
+    <div class="contenedor glass-card">
+        <h1>Seguridad</h1>
+        <p class="subtitulo">Configura la autenticación de dos factores (MFA)</p>
+
+        <div class="mfa-setup-content">
+            <div class="qr-container">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="qr-image">
+                <div class="qr-overlay-text">Escanea con tu App</div>
+            </div>
+
+            <div class="mfa-info">
+                <p>Usa Google Authenticator o similar para escanear el código.</p>
+                <div class="secret-box">
+                    <span class="label-secret">Llave manual:</span>
+                    <code id="secret-key">{{ secret }}</code>
+                </div>
+            </div>
+
+            <form method="POST" class="mfa-form">
+                <div class="grupo-formulario">
+                    <label for="code">Código de Verificación</label>
+                    <input type="text" id="code" name="code" placeholder="000000" maxlength="6" pattern="\d{6}" required
+                        autofocus autocomplete="one-time-code">
+                </div>
+                <button type="submit" class="btn-primario">Activar Seguridad</button>
+            </form>
+
+            <a href="{{ url_for('main.dashboard') }}" class="enlace-volver"
+                style="justify-content: center; margin-top: 1.5rem; margin-bottom: 0;">
+                <span>← Cancelar y Volver</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .qr-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .qr-image {
+        width: 200px;
+        height: 200px;
+        padding: 10px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .qr-image:hover {
+        transform: scale(1.05);
+    }
+
+    .qr-overlay-text {
+        margin-top: 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primario-claro);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .mfa-info {
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+        color: var(--texto-atenuado);
+    }
+
+    .secret-box {
+        margin-top: 10px;
+        padding: 12px;
+        background: #f0f4f8;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .label-secret {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--primario);
+    }
+
+    #secret-key {
+        font-family: 'Monaco', monospace;
+        font-size: 0.9rem;
+        color: var(--primario-claro);
+        word-break: break-all;
+    }
+
+    #code {
+        text-align: center;
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+        font-weight: 800;
+        color: var(--primario);
+    }
+
+    #code::placeholder {
+        letter-spacing: normal;
+        font-size: 1rem;
+        font-weight: 400;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}

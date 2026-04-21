@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Api Health Monitor - Los Primos Detailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Dashboard de Salud de Servicios</h2>
+        <p class="subtitulo">Estado en tiempo real de los 10 servicios (5 Consumidos | 5 Expuestos)</p>
+    </div>
+</header>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-top: 2rem;">
+    <!-- 🌍 SERVICIOS CONSUMIDOS (EXTERNOS) -->
+    <section>
+        <h3 style="margin-bottom: 1rem; border-bottom: 2px solid var(--primario); padding-bottom: 0.5rem;">🌍 Consumidos (Externos Reales)</h3>
+        {% for api in consumed_status %}
+        <div class="tarjeta-premium" style="margin-bottom: 1.5rem; padding: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <strong style="color: var(--primario);">{{ api.name }}</strong>
+                {% if api.ok %}
+                <span style="background: var(--exito); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">ONLINE</span>
+                {% else %}
+                <span style="background: var(--error); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">OFFLINE</span>
+                {% endif %}
+            </div>
+            <div style="font-size: 0.85rem; background: #f8f9fa; border: 1px solid #eee; padding: 0.8rem; border-radius: 8px; max-height: 150px; overflow-y: auto;">
+                <pre style="margin: 0; white-space: pre-wrap; color: #333;">{{ api.data | tojson(indent=2) }}</pre>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- ⚙️ SERVICIOS EXPUESTOS (LÓGICA DEL APP) -->
+    <section>
+        <h3 style="margin-bottom: 1rem; border-bottom: 2px solid var(--acento); padding-bottom: 0.5rem;">⚙️ Expuestos (Funcionales)</h3>
+        {% for name, status in exposed_status.items() %}
+        <div class="tarjeta-premium" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; padding: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong>{{ name }}</strong>
+                {% if status.ok %}
+                <span style="color: var(--exito); font-weight: bold; font-size: 0.9rem;">● Activo</span>
+                {% else %}
+                <span style="color: var(--error); font-weight: bold; font-size: 0.9rem;">● Error</span>
+                {% endif %}
+            </div>
+            <span style="font-size: 0.8rem; opacity: 0.7; font-family: monospace;">Ruta: {{ status.url }}</span>
+            <hr style="opacity: 0.1; margin: 0.8rem 0;">
+            <div style="font-size: 0.8rem; color: #666;">
+                <em>Lógica de respuesta verificada en puerto 5000.</em>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<footer style="margin-top: 3rem; text-align: center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 2rem;">
+    <button onclick="window.location.reload()" class="btn-primario">Actualizar Diagnóstico</button>
+    <a href="{{ url_for('main.wallet') }}" style="margin-left: 1rem; color: var(--primario); text-decoration: none;">Cerrar Panel</a>
+</footer>
+{% endblock %}

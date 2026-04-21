@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2 style="margin-bottom: 4px;">Bienvenido de vuelta</h2>
+        <p class="subtitulo" style="text-align: left; margin-bottom: 0;">Administra tus autos y el control
+            de lavado de los mismos</p>
+    </div>
+    <div class="user-profile" style="display: flex; align-items: center; gap: 12px;">
+        <div id="loyalty-badge" style="font-size: 0.7rem; background: var(--primario); color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; display: none;">...</div>
+        <div style="text-align: right;">
+            <span style="font-weight: 600; display: block;">{{ user.name }}</span>
+            <span style="font-size: 0.7rem; color: var(--texto-atenuado);">Cliente Los Primos</span>
+        </div>
+        <div style="width: 45px; height: 45px; background: white; border-radius: 50%; border: 2px solid var(--acento); padding: 2px;">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.name }}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%;">
+        </div>
+    </div>
+</header>
+<div style="margin-top: -1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--texto-atenuado);">
+    <span>📍 {{ location.city or 'San José' }}, {{ location.country or 'Costa Rica' }}</span>
+    <span style="opacity: 0.5;">|</span>
+    <span>🌡️ {{ weather.main.temp if weather and weather.main else '24' }}°C - {{ weather.weather[0].description if weather and weather.weather else 'Cielo Despejado' }}</span>
+</div>
+
+<!-- 🧠 SECCIÓN DE SUGERENCIA IA (NUEVA) -->
+<section id="recommendation-section" style="margin-bottom: 2.5rem; display: none;">
+    <div class="tarjeta-premium" style="background: linear-gradient(135deg, rgba(15, 76, 117, 0.05) 0%, rgba(50, 130, 184, 0.1) 100%); border: 1px solid var(--acento); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; font-size: 5rem; opacity: 0.05; transform: rotate(15deg);">💡</div>
+        <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+            <div style="background: var(--primario); color: white; padding: 12px; border-radius: 12px; font-size: 1.5rem;">🤖</div>
+            <div style="flex: 1;">
+                <h4 style="color: var(--primario); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 4px;">Sugerencia del Experto (AI)</h4>
+                <h3 id="rec-title" style="margin-bottom: 8px; font-size: 1.4rem;">...</h3>
+                <p id="rec-reason" style="font-size: 0.9rem; color: var(--texto-atenuado); margin-bottom: 12px; line-height: 1.4;">Analizando variables climáticas y de tu vehículo...</p>
+                <div id="rec-weather" style="display: inline-block; background: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: var(--primario-claro); border: 1px solid rgba(0,0,0,0.05);">🌤️ Cargando datos...</div>
+            </div>
+            <a href="{{ url_for('main.quotes') }}" class="btn-primario" style="margin-top: 0; padding: 10px 20px; width: auto; font-size: 0.85rem;">Seguir Sugerencia</a>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de Alertas de Mantenimiento (Nuevo) -->
+{% if vehicles %}
+<section id="maintenance-alerts" style="margin-bottom: 2rem; display: none;">
+    <h3 style="margin-bottom: 1rem; font-size: 1rem; opacity: 0.8;">Salud de tu Garage (AI)</h3>
+    <div id="alerts-container" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Se llenará vía JS -->
+    </div>
+</section>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 4. Alertas de Mantenimiento para el Dashboard
+    document.querySelectorAll('.dash-veh-data').forEach(el => {
+        const vId = el.dataset.id;
+        const vBrand = el.dataset.brand;
+        const vDays = el.dataset.days;
+
+        fetch('/api/v1/vehicle/maintenance-predictor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ last_wash_days: parseInt(vDays), car_color: 'gray' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.es_urgente) {
+                document.getElementById('maintenance-alerts').style.display = 'block';
+                const container = document.getElementById('alerts-container');
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'tarjeta-premium';
+                alertDiv.style.borderLeft = '4px solid var(--error)';
+                alertDiv.style.padding = '12px';
+                alertDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--error);">⚠️ ¡Urgente: ${vBrand}!</strong>
+                            <p style="font-size: 0.8rem; margin: 4px 0;">${data.causa}</p>
+                        </div>
+                        <a href="{{ url_for('main.quotes') }}" class="btn-primario" style="padding: 6px 12px; font-size: 0.75rem;">Reservar</a>
+                    </div>
+                `;
+                container.appendChild(alertDiv);
+            }
+        });
+    });
+});
+</script>
+
+<div style="display: none;">
+    {% for vehicle in vehicles %}
+    <div class="dash-veh-data" data-id="{{ vehicle.id }}" data-brand="{{ vehicle.brand }}" data-days="{{ (now - vehicle.last_wash).days if vehicle.last_wash else 30 }}"></div>
+    {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Cargar Lealtad
+    fetch('/api/v1/loyalty/status')
+        .then(res => res.json())
+        .then(data => {
+            if (data.estatus) {
+                const badge = document.getElementById('loyalty-badge');
+                badge.innerText = data.estatus;
+                badge.style.display = 'block';
+                // Color según nivel
+                if (data.estatus === 'PLATINO') badge.style.background = '#E5E4E2', badge.style.color = '#333';
+                if (data.estatus === 'ORO') badge.style.background = '#FFD700', badge.style.color = '#333';
+                if (data.estatus === 'PLATA') badge.style.background = '#C0C0C0', badge.style.color = '#333';
+            }
+        });
+
+    // 2. Cargar Recomendación
+    fetch('/api/v1/recommendation')
+        .then(res => res.json())
+        .then(data => {
+            if (data.recomendacion) {
+                document.getElementById('recommendation-section').style.display = 'block';
+                document.getElementById('rec-title').innerText = data.recomendacion;
+                document.getElementById('rec-reason').innerText = data.causa;
+                document.getElementById('rec-weather').innerText = `🌤️ ${data.clima_actual} en ${data.ubicacion}`;
+            }
+        });
+
+    // 3. Cargar Ahorro de Agua (Simulado con 5 lavados)
+    fetch('/api/v1/tools/water-saving', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ washes_count: 5 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ahorro_litros) {
+            document.getElementById('water-saving-text').innerText = `Has ahorrado ${data.ahorro_litros}L de agua`;
+        }
+    });
+});
+</script>
+
+<!-- Cuadrícula de Acciones Rápidas -->
+<section class="cuadricula-estadisticas">
+    <!-- Impacto Ambiental (Nuevo) -->
+    <div class="tarjeta-premium" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
+        <div class="icono-tarjeta">💧</div>
+        <strong style="color: #2e7d32;">Impacto Ambiental</strong>
+        <p id="water-saving-text" style="font-size: 0.8rem; margin-top: 8px;">Calculando tu impacto...</p>
+    </div>
+
+    <div class="tarjeta-premium">
+        <div class="icono-tarjeta">🚗</div>
+        <a href="{{ url_for('main.vehicles') }}">
+            <strong>Mis vehículos</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Administra tus autos registrados</p>
+        </a>
+    </div>
+    <div class="tarjeta-premium">
+        <div class="icono-tarjeta">📅</div>
+        <a href="{{ url_for('main.quotes') }}">
+            <strong>Reservar</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Reserva tu próximo lavado</p>
+            <div id="dash-wait-preview" style="margin-top: 10px; font-size: 0.7rem; color: var(--primario); font-weight: bold; background: white; padding: 2px 6px; border-radius: 4px; display: none;">⏱️ ...</div>
+        </a>
+    </div>
+
+<script>
+    // Preview de tiempo de espera en el dashboard
+    fetch('/api/v1/service/wait-time')
+        .then(res => res.json())
+        .then(data => {
+            const preview = document.getElementById('dash-wait-preview');
+            preview.innerText = `⏱️ Espera: ${data.tiempo_espera_min} min (${data.carga_actual})`;
+            preview.style.display = 'inline-block';
+            if(data.carga_actual === 'ALTA') preview.style.color = 'var(--error)';
+        });
+</script>
+    <div class="tarjeta-premium">
+        <div class="icono-tarjeta">💳</div>
+        <a href="{{ url_for('main.wallet') }}">
+            <strong>Billetera</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Saldo: ₡{{ user.wallet_balance or 0 }}</p>
+        </a>
+    </div>
+    <div class="tarjeta-premium">
+        <div class="icono-tarjeta">⭐</div>
+        <a href="{{ url_for('main.reviews') }}">
+            <strong>Reseñas</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Califica nuestro servicio</p>
+        </a>
+    </div>
+    <div class="tarjeta-premium">
+        <div class="icono-tarjeta">💡</div>
+        <a href="{{ url_for('main.guides') }}">
+            <strong>Consejos</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Tips de pre y post lavado</p>
+        </a>
+    </div>
+    {% if user.is_admin %}
+    <div class="tarjeta-premium" style="border: 2px dashed var(--primario-claro); background: rgba(50, 130, 184, 0.05);">
+        <div class="icono-tarjeta">🛡️</div>
+        <a href="{{ url_for('auth.admin_recover_user') }}">
+            <strong>Admin: Recuperación</strong>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Ayudar a un cliente con su cuenta</p>
+        </a>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Tareas Próximas / Recordatorios -->
+<section class="seccion-recordatorio">
+    <h3 style="margin-bottom: 1.5rem;">Próximos Recordatorios</h3>
+
+    <div class="item-recordatorio">
+        <div class="insignia-fecha">
+            <span>15</span>
+            <span style="font-size: 10px; opacity: 0.8;">FEB</span>
+        </div>
+        <div>
+            <strong style="display: block; color: var(--primario);">Lavado programado - Toyota
+                Corolla</strong>
+            <span style="font-size: 0.85rem; color: var(--texto-atenuado);">10:00 AM - Sucursal
+                Principal</span>
+        </div>
+    </div>
+
+    <div class="item-recordatorio">
+        <div class="insignia-fecha" style="background: var(--acento); color: var(--primario);">
+            <span>24</span>
+            <span style="font-size: 10px; opacity: 0.8;">FEB</span>
+        </div>
+        <div>
+            <strong style="display: block; color: var(--primario);">Mantenimiento recomendado - Honda
+                Civic</strong>
+            <span style="font-size: 0.85rem; color: var(--texto-atenuado);">Han pasado 12 días desde el
+                último lavado</span>
+        </div>
+    </div>
+</section>
+
+<!-- 📰 SECCIÓN DE NOTICIAS (NUEVA) -->
+<section style="margin-top: 3rem; margin-bottom: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0;">Mundo Automotriz</h3>
+        <span style="font-size: 0.75rem; color: var(--exito); font-weight: bold;">● ACTUALIZADO</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        {% if news %}
+            {% for item in news[:3] %}
+            <div class="tarjeta-premium" style="padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <div>
+                    <p style="font-size: 0.65rem; text-transform: uppercase; color: var(--primario-claro); font-weight: 800; margin-bottom: 8px;">Noticia</p>
+                    <h4 style="font-size: 0.95rem; line-height: 1.3; margin-bottom: 15px;">{{ item.title }}</h4>
+                </div>
+                <a href="{{ item.url }}" target="_blank" style="font-size: 0.8rem; color: var(--primario); font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    Leer más <span>↗</span>
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 2rem;">
+                No hay noticias disponibles en este momento.
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

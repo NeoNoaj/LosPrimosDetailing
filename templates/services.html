@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Servicios - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Catálogo de Servicios</h2>
+        <p class="subtitulo">Explora nuestros paquetes y productos de detallado</p>
+    </div>
+</header>
+
+<section class="cuadricula-catalogo">
+    {% for product in products %}
+    <div class="tarjeta-premium tarjeta-producto">
+        <div class="imagen-producto" style="background-image: url('{{ product.image_url or "
+            https://via.placeholder.com/300x200?text=Producto" }}')"></div>
+        <div class="info-producto">
+            <h3>{{ product.name }}</h3>
+            <p class="categoria">
+                {% if product.category == 'service' %}Servicio
+                {% elif product.category == 'product' %}Producto
+                {% else %}{{ product.category|capitalize }}{% endif %}
+            </p>
+            <p class="precio">₡{{ product.price }}</p>
+            <!-- 💸 Conversión via BCCR -->
+            {% if exchange_rate and exchange_rate.compra %}
+                {% set price_usd = (product.price / exchange_rate.compra)|round(2) %}
+                <p style="font-size: 0.8rem; color: var(--texto-atenuado); margin-top: -1.2rem; margin-bottom: 1rem;">
+                    aprox. ${{ price_usd }} USD <span style="font-size: 0.6rem; opacity: 0.5;">(BCCR)</span>
+                </p>
+            {% endif %}
+            <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="btn-primario"
+                style="text-decoration: none; display: block; text-align: center;">Ver Detalles</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No hay productos disponibles en este momento.</p>
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}

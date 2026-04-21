@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LosPrimosDetailing{% endblock %}</title>
+    {% block hide_nav %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    {% set hide_nav = self.hide_nav()|trim == 'True' %}
+    <div class="envoltorio-tablero">
+        <!-- Navegación Lateral (Escritorio) -->
+        {% if not hide_nav %}
+        <nav class="barra-lateral">
+            <header>
+                <h1>LosPrimosDetailing</h1>
+                {% if user %}
+                <div class="perfil-lateral" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.name }}" alt="Avatar" style="width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; padding: 2px;">
+                    <div>
+                        <p style="color: white; font-weight: 600; margin: 0; font-size: 0.95rem;">{{ user.name }}</p>
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin: 0;">Cliente Premium</p>
+                    </div>
+                </div>
+                {% endif %}
+            </header>
+
+            <ul class="lista-navegacion">
+                <li class="item-navegacion {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                    <a href="{{ url_for('main.dashboard') }}">Inicio</a>
+                </li>
+                <li
+                    class="item-navegacion {% if request.endpoint == 'main.list_services' or request.endpoint == 'main.product_detail' %}active{% endif %}">
+                    <a href="{{ url_for('main.list_services') }}">Servicios</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.wallet' %}active{% endif %}">
+                    <a href="{{ url_for('main.wallet') }}">Mi Billetera</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.vehicles' %}active{% endif %}">
+                    <a href="{{ url_for('main.vehicles') }}">Mis Vehículos</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.gallery' %}active{% endif %}">
+                    <a href="{{ url_for('main.gallery') }}">Galería</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.quotes' %}active{% endif %}">
+                    <a href="{{ url_for('main.quotes') }}">Cotizaciones</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.guides' %}active{% endif %}">
+                    <a href="{{ url_for('main.guides') }}">Consejos</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'main.reviews' %}active{% endif %}">
+                    <a href="{{ url_for('main.reviews') }}">Reseñas</a>
+                </li>
+                <li class="item-navegacion {% if request.endpoint == 'auth.mfa_setup' %}active{% endif %}">
+                    <a href="{{ url_for('auth.mfa_setup') }}">Seguridad (MFA)</a>
+                </li>
+                <li class="item-navegacion cerrar-sesion" style="margin-top: auto;">
+                    <a href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% if not hide_nav %}
+        <!-- Barra de Navegación Inferior (Móvil) -->
+        <nav class="barra-inferior">
+            <a href="{{ url_for('main.dashboard') }}"
+                class="item-inferior {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                <span class="icono-inferior">🏠</span>
+                <span class="etiqueta-inferior">Inicio</span>
+            </a>
+            <a href="{{ url_for('main.list_services') }}"
+                class="item-inferior {% if request.endpoint == 'main.list_services' or request.endpoint == 'main.product_detail' %}active{% endif %}">
+                <span class="icono-inferior">🛠️</span>
+                <span class="etiqueta-inferior">Servicios</span>
+            </a>
+            <a href="{{ url_for('main.quotes') }}"
+                class="item-inferior {% if request.endpoint == 'main.quotes' %}active{% endif %}">
+                <span class="icono-inferior">📋</span>
+                <span class="etiqueta-inferior">Citas</span>
+            </a>
+            <a href="{{ url_for('auth.mfa_setup') }}"
+                class="item-inferior {% if request.endpoint == 'auth.mfa_setup' %}active{% endif %}">
+                <span class="icono-inferior">🔐</span>
+                <span class="etiqueta-inferior">Seguridad</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="item-inferior">
+                <span class="icono-inferior">🚪</span>
+                <span class="etiqueta-inferior">Salir</span>
+            </a>
+        </nav>
+        {% endif %}
+
+        <!-- Espacio de Trabajo Principal -->
+        <main class="contenido-principal">
+            <header class="barra-superior-movil">
+                <h1 class="logo-movil">LosPrimos</h1>
+                {% if user %}
+                {% if hide_nav %}
+                    <a href="{{ url_for('auth.logout') }}" class="avatar-movil flex-centrado" style="text-decoration: none; font-size: 1.2rem;">🚪</a>
+                {% else %}
+                    <div class="perfil-movil" onclick="toggleMobileMenu()">
+                        <div class="avatar-movil">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.name }}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%;">
+                        </div>
+                        <div id="dropdown-movil" class="menu-desplegable-movil">
+                            <div class="info-usuario-movil">
+                                <strong>{{ user.name }}</strong>
+                                <span>{{ user.email }}</span>
+                            </div>
+                            <hr>
+                            <a href="{{ url_for('auth.mfa_setup') }}">🛡️ Seguridad (MFA)</a>
+                            <a href="{{ url_for('main.vehicles') }}">🚗 Mis Vehículos</a>
+                            <a href="{{ url_for('main.wallet') }}">💳 Mi Billetera</a>
+                            <hr>
+                            <a href="{{ url_for('auth.logout') }}" class="texto-rojo">🚪 Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% endif %}
+                {% endif %}
+            </header>
+
+            <section class="messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="mensaje-flash {{ category }}">
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </section>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block extra_scripts %}
+    <script>
+        function toggleMobileMenu() {
+            var dropdown = document.getElementById("dropdown-movil");
+            if (dropdown) dropdown.classList.toggle("show");
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.avatar-movil') && !event.target.matches('.perfil-movil')) {
+                var dropdowns = document.getElementsByClassName("menu-desplegable-movil");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+    {% endblock %}
+</body>
+
+<style>
+    .perfil-movil { position: relative; cursor: pointer; }
+    .menu-desplegable-movil {
+        display: none; position: absolute; top: 50px; right: 0;
+        background: white; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border-radius: var(--radio-medio); z-index: 2001; padding: 1rem 0;
+        border: 1px solid rgba(0,0,0,0.05); animation: slideDown 0.3s ease-out;
+    }
+    .menu-desplegable-movil.show { display: block; }
+    .menu-desplegable-movil a {
+        display: block; padding: 12px 20px; color: var(--texto-principal);
+        text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: var(--transicion);
+    }
+    .menu-desplegable-movil a:hover { background: var(--fondo-principal); padding-left: 25px; }
+    .menu-desplegable-movil hr { border: 0; border-top: 1px solid #f0f0f0; margin: 5px 0; }
+    .info-usuario-movil { padding: 0 20px 10px 20px; display: flex; flex-direction: column; }
+    .info-usuario-movil strong { font-size: 0.95rem; color: var(--primario); }
+    .info-usuario-movil span { font-size: 0.75rem; color: var(--texto-atenuado); }
+    .texto-rojo { color: var(--error) !important; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+</html>

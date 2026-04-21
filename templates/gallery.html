@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Galería - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Tu Galería</h2>
+        <p class="subtitulo">Fotos de tus transformación de detallado</p>
+    </div>
+</header>
+
+<section class="gallery-section">
+    {% for vehicle in vehicles %}
+    <div class="vehicle-gallery-group"
+        style="margin-bottom: 3rem; background: white; padding: 2rem; border-radius: var(--radio-medio); box-shadow: var(--sombra-suave);">
+        <h3 style="margin-bottom: 1.5rem; color: var(--primario-oscuro);">{{ vehicle.brand }} {{ vehicle.model }} ({{
+            vehicle.plate }})</h3>
+        <div class="cuadricula-galeria">
+            {% for img in vehicle.images %}
+            <div class="item-galeria" style="cursor: pointer;" onclick="abrirLightbox('{{ img.image_path }}')">
+                <img src="{{ url_for('static', filename=img.image_path.replace('static/', '')) }}"
+                    alt="Vehículo {{ vehicle.plate }}"
+                    style="transition: var(--transicion); border-radius: var(--radio-pequeño); width: 100%; height: 150px; object-fit: cover;">
+            </div>
+            {% else %}
+            <p class="empty-gallery" style="grid-column: 1/-1; color: var(--texto-atenuado);">Aún no hay imágenes para
+                este vehículo.</p>
+            {% endfor %}
+        </div>
+        <form action="{{ url_for('main.upload_gallery') }}" method="POST" enctype="multipart/form-data"
+            style="margin-top: 1.5rem;">
+            <input type="hidden" name="vehicle_id" value="{{ vehicle.id }}">
+            <input type="file" name="file" id="file-{{ vehicle.id }}" style="display: none;"
+                onchange="this.form.submit()">
+            <button type="button" class="btn-primario" style="max-width: 200px; padding: 12px;"
+                onclick="document.getElementById('file-{{ vehicle.id }}').click()">Subir Foto</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="empty-state"
+        style="text-align: center; padding: 4rem; background: white; border-radius: var(--radio-medio);">
+        <p style="color: var(--texto-atenuado); font-size: 1.1rem;">Registra un vehículo primero para ver su galería.
+        </p>
+        <a href="{{ url_for('main.vehicles') }}" class="btn-primario"
+            style="display: inline-block; width: auto; padding: 14px 30px; margin-top: 1.5rem;">Ir a Mis Vehículos</a>
+    </div>
+    {% endfor %}
+</section>
+
+<!-- Lightbox Modal -->
+<div id="lightbox" class="modal-galeria" onclick="cerrarLightbox()">
+    <span class="cerrar-modal">&times;</span>
+    <img id="img-lightbox" class="modal-contenido" src="" alt="Vista ampliada">
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function abrirLightbox(src) {
+        const modal = document.getElementById('lightbox');
+        const img = document.getElementById('img-lightbox');
+        img.src = src;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Evitar scroll
+    }
+
+    function cerrarLightbox() {
+        const modal = document.getElementById('lightbox');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restaurar scroll
+    }
+
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarLightbox();
+    });
+</script>
+{% endblock %}

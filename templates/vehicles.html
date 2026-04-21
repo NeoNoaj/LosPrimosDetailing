@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Vehículos - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Mis Vehículos</h2>
+        <p class="subtitulo">Administra tus autos registrados</p>
+    </div>
+</header>
+
+<section class="registro-vehiculo"
+    style="margin-bottom: 3rem; background: white; padding: 2rem; border-radius: var(--radio-medio); box-shadow: var(--sombra-suave);">
+    <h3 style="margin-bottom: 1.5rem;">Registrar Nuevo Vehículo</h3>
+    <form method="POST" class="formulario-horizontal">
+        <div class="grupo-formulario" style="margin-bottom: 0;">
+            <input type="text" name="plate" placeholder="Placa (ej: ABC-123)" required>
+        </div>
+        <div class="grupo-formulario" style="margin-bottom: 0;">
+            <input type="text" name="brand" placeholder="Marca (ej: Toyota)" required>
+        </div>
+        <div class="grupo-formulario" style="margin-bottom: 0;">
+            <input type="text" name="model" placeholder="Modelo (ej: Corolla)" required>
+        </div>
+        <div class="grupo-formulario" style="margin-bottom: 0; flex: 0.5;">
+            <button type="submit" class="btn-primario"
+                style="margin-top: 0; white-space: nowrap; width: 100%; padding: 16px 30px; height: 100%;">Registrar</button>
+        </div>
+    </form>
+</section>
+
+<section class="cuadricula-vehiculos">
+    {% for vehicle in vehicles %}
+    <div class="tarjeta-premium">
+        <div class="pantalla-placa-vehiculo">{{ vehicle.plate }}</div>
+        <h3 style="margin-bottom: 0.5rem;">{{ vehicle.brand }} {{ vehicle.model }}</h3>
+
+        {% set days_since = (now - vehicle.last_wash).days if vehicle.last_wash else 99 %}
+        <div class="contador-lavado {% if days_since > 15 %}advertencia{% endif %}">
+            Días desde el último lavado: <span>{{ days_since }}</span>
+        </div>
+
+        <!-- 🛡️ Alerta de Seguridad (API NHTSA) -->
+        {% set color_alerta = 'var(--error)' if vehicle.recall_count > 0 else 'var(--exito)' %}
+        {% set fondo_alerta = 'rgba(231, 76, 60, 0.05)' if vehicle.recall_count > 0 else 'rgba(39, 174, 96, 0.05)' %}
+        <div style="margin-top: 1rem; border-radius: 12px; padding: 12px; border: 1px solid {{ color_alerta }}; background: {{ fondo_alerta }};">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <span style="font-size: 1.2rem;">🛡️</span>
+                <strong style="font-size: 0.85rem; color: var(--primario);">Seguridad (NHTSA)</strong>
+                {% if vehicle.recall_status == "OFFLINE" %}
+                <span style="font-size: 0.6rem; background: #eee; padding: 2px 5px; border-radius: 4px; opacity: 0.6;">MOCK</span>
+                {% endif %}
+            </div>
+            {% if vehicle.recall_count > 0 %}
+            <p style="font-size: 0.75rem; color: var(--error); font-weight: 600;">⚠️ Se detectaron {{ vehicle.recall_count }} alertas de seguridad para este modelo.</p>
+            {% else %}
+            <p style="font-size: 0.75rem; color: var(--exito); font-weight: 600;">✅ No se encontraron reportes críticos de fábrica.</p>
+            {% endif %}
+        </div>
+
+        <!-- Predicción de Mantenimiento (AI) -->
+        <div id="ai-prediction-{{ vehicle.id }}" 
+             class="ai-prediction-box" 
+             data-days-since="{{ days_since }}" 
+             data-vehicle-id="{{ vehicle.id }}"
+             style="margin-top: 1rem; font-size: 0.8rem; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 6px; border-left: 3px solid #ccc;">
+            <span style="opacity: 0.6;">Sugerencia AI:</span> Cargando...
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+            <a href="{{ url_for('main.gallery') }}" class="btn-primario"
+                style="background: var(--acento); color: var(--primario); box-shadow: none; font-size: 0.9rem; padding: 10px;">Galería</a>
+            <a href="{{ url_for('main.quotes') }}" class="btn-primario"
+                style="font-size: 0.9rem; padding: 10px;">Agendar</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+        <p style="color: var(--texto-atenuado);">Aún no tienes vehículos registrados.</p>
+    </div>
+    {% endfor %}
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.ai-prediction-box').forEach(el => {
+        const daysSince = el.dataset.daysSince;
+        const vId = el.dataset.vehicleId;
+
+        fetch('/api/v1/vehicle/maintenance-predictor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ last_wash_days: parseInt(daysSince), car_color: 'gray' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.recomendacion) {
+                el.innerHTML = `<span style="font-weight: bold; color: ${data.es_urgente ? '#f44336' : '#2e7d32'};">${data.recomendacion}</span><br>${data.causa}`;
+                el.style.borderColor = data.es_urgente ? '#f44336' : '#2e7d32';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

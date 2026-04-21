@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Cotizaciones - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Cotizaciones</h2>
+        <p class="subtitulo">Solicita un presupuesto para tu vehículo</p>
+    </div>
+</header>
+
+<div class="layout-cotizacion">
+
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+        <!-- Formulario de Cotización Unificado -->
+        <section style="background: var(--primario); color: white; padding: 2rem; border-radius: var(--radio-medio); box-shadow: var(--sombra-suave);">
+            <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">📝 Solicitar Cotización</h3>
+            
+            <form action="{{ url_for('main.quotes') }}" method="POST" class="formulario-vertical">
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div>
+                        <label style="color: white; opacity: 0.9;">Tipo de Servicio</label>
+                        <select id="est-service" name="service_id" required style="width: 100%; height: 45px; border-radius: 8px; padding: 0 12px; color: #333; border: none;">
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="color: white; opacity: 0.9;">Tamaño del Auto</label>
+                            <select id="est-size" name="size" style="width: 100%; height: 45px; border-radius: 8px; padding: 0 12px; color: #333; border: none;">
+                                <option value="sedan">Sedán (Estándar)</option>
+                                <option value="suv">SUV / 4x4</option>
+                                <option value="pickup">Pick-up</option>
+                                <option value="moto">Moto</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: white; opacity: 0.9;">Nivel de Suciedad</label>
+                            <select id="est-dirt" name="dirt" style="width: 100%; height: 45px; border-radius: 8px; padding: 0 12px; color: #333; border: none;">
+                                <option value="leve">Leve</option>
+                                <option value="moderada">Moderada</option>
+                                <option value="extrema">Extrema</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="est-result" style="margin: 0.5rem 0; text-align: center; background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 0.85rem; opacity: 0.8;">Inversión Estimada</span>
+                        <h2 id="est-price-crc" style="margin: 5px 0; color: white; font-size: 2rem;">₡0</h2>
+                        <span id="est-price-usd" style="font-size: 1rem; color: var(--acento); font-weight: 600;">($0.00 USD)</span>
+                        
+                        <div id="est-water-saved" style="margin-top: 10px; font-size: 0.75rem; color: #4ade80; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 6px; display: none;">
+                            🍃 Ahorrarás <span id="litros-ahorro">0</span>L de agua
+                        </div>
+                    </div>
+
+                    <hr style="opacity: 0.1; margin: 0.5rem 0;">
+
+                    <div>
+                        <label style="color: white; opacity: 0.9;">📍 Ubicación</label>
+                        <input type="text" name="location" placeholder="Tu dirección o sucursal" required 
+                               style="width: 100%; height: 45px; border-radius: 8px; padding: 0 12px; color: #333; border: none;">
+                    </div>
+
+                    <div>
+                        <label style="color: white; opacity: 0.9;">💬 Comentarios adicionales</label>
+                        <textarea name="comments" placeholder="Ej: Manchas difíciles, horario preferido..." rows="3"
+                                  style="width: 100%; border-radius: 8px; padding: 12px; color: #333; border: none; font-family: inherit;"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primario" style="margin-top: 0.5rem; background: var(--acento); color: var(--primario); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        Solicitar Cotización Oficial
+                    </button>
+                    <p style="text-align: center; font-size: 0.75rem; opacity: 0.7;">* Precio final sujeto a revisión física.</p>
+                </div>
+            </form>
+        </section>
+
+        <!-- Capacidad de Sucursal (Nuevo) -->
+        <aside style="background: #fdf2f2; border: 1px solid #ffcdd2; padding: 1.5rem; border-radius: var(--radio-medio);">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1rem; color: #c62828;">⏱️ Carga en Sucursal</h3>
+            <div id="wait-time-container">
+                <span id="load-label" style="font-size: 0.75rem; font-weight: bold; background: #c62828; color: white; padding: 2px 6px; border-radius: 4px;">CARGANDO...</span>
+                <p id="wait-msg" style="font-size: 0.85rem; margin-top: 8px; color: #333;">Consultando disponibilidad en tiempo real...</p>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+function updateEstimate() {
+    const size = document.getElementById('est-size').value;
+    const dirt = document.getElementById('est-dirt').value;
+    const serviceId = document.getElementById('est-service').value;
+
+    fetch('/api/v1/pricing/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ size: size, dirt_level: dirt, service_id: serviceId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const crc = data.monto_estimado;
+        document.getElementById('est-price-crc').innerText = `₡${crc.toLocaleString()}`;
+        
+        fetch('/api/v1/tools/currency-convert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto_crc: crc })
+        })
+        .then(res => res.json())
+        .then(conv => {
+            document.getElementById('est-price-usd').innerText = `($${conv.monto_usd} USD)`;
+        });
+
+        // Cargar impacto hídrico (Nuevo)
+        fetch('/api/v1/tools/water-saving', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ washes_count: 1 })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ahorro_litros) {
+                document.getElementById('litros-ahorro').innerText = data.ahorro_litros;
+                document.getElementById('est-water-saved').style.display = 'block';
+            }
+        });
+    });
+}
+
+function updateWaitTime() {
+    fetch('/api/v1/service/wait-time')
+    .then(res => res.json())
+    .then(data => {
+        const label = document.getElementById('load-label');
+        label.innerText = `CARGA ${data.carga_actual}`;
+        label.style.background = data.carga_actual === 'ALTA' ? '#c62828' : (data.carga_actual === 'MEDIA' ? '#f9a825' : '#2e7d32');
+        document.getElementById('wait-msg').innerText = data.mensaje;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('est-service').addEventListener('change', updateEstimate);
+    document.getElementById('est-size').addEventListener('change', updateEstimate);
+    document.getElementById('est-dirt').addEventListener('change', updateEstimate);
+    updateEstimate();
+    updateWaitTime();
+    setInterval(updateWaitTime, 30000); // Actualizar cada 30s
+});
+</script>
+
+<section class="mis-cotizaciones">
+    <h3 style="margin-bottom: 1.5rem;">Mis Solicitudes</h3>
+    {% for quote in quotes %}
+    <div class="tarjeta-premium item-recordatorio" style="margin-bottom: 1rem; border-bottom: none;">
+        <div class="insignia-fecha" style="background: var(--acento); color: var(--primario);">
+            <span>{{ quote.created_at.strftime('%d') }}</span>
+            <span style="font-size: 10px; opacity: 0.8;">{{ quote.created_at.strftime('%b').upper() }}</span>
+        </div>
+        <div style="flex-grow: 1;">
+            <strong style="display: block; color: var(--primario); font-size: 1.1rem; margin-bottom: 2px;">{{
+                quote.service.name }}</strong>
+            <p style="font-size: 0.85rem; color: var(--texto-atenuado);">📍 {{ quote.location }}</p>
+            <p style="font-size: 0.85rem; margin-top: 5px;">{{ quote.comments or 'Sin comentarios adicionales' }}</p>
+        </div>
+        <div style="text-align: right;">
+            {% if quote.status == 'pending' %}
+                <span style="display: block; margin-bottom: 8px; padding: 4px 10px; background: #fff3cd; border-radius: 10px; font-size: 0.75rem; font-weight: 700; color: #856404; text-align: center;">PENDIENTE</span>
+                <form action="{{ url_for('main.pay_quote', quote_id=quote.id) }}" method="POST">
+                    {% if has_card %}
+                    <select name="method" style="display: block; width: 100%; margin-bottom: 5px; padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 0.75rem;">
+                        <option value="wallet">Wallet (Puntos)</option>
+                        <option value="bank">Banco (Tarjeta)</option>
+                    </select>
+                    {% else %}
+                    <input type="hidden" name="method" value="wallet">
+                    {% endif %}
+                    <button type="submit" class="btn-primario" style="padding: 6px 15px; font-size: 0.8rem; white-space: nowrap;">
+                        Pagar ₡{{ (quote.total_price if quote.total_price and quote.total_price > 0 else quote.service.price) | int }}
+                    </button>
+                </form>
+            {% elif quote.status == 'paid' %}
+                <span style="padding: 6px 14px; background: #d4edda; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: #155724;">PAGADO</span>
+            {% else %}
+                <span style="padding: 6px 14px; background: #eee; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: var(--texto-atenuado);">{{ quote.status.upper() }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="text-align: center; padding: 3rem;">
+        <p style="color: var(--texto-atenuado);">No tienes solicitudes activas.</p>
+    </div>
+    {% endfor %}
+</section>
+{% endblock %}

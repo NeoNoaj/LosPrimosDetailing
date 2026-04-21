@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Verificación de Seguridad - LosPrimos{% endblock %}
+
+{% block content %}
+<div class="envoltorio-autenticacion">
+    <div class="contenedor glass-card">
+        <h1>Verificación</h1>
+        <p class="subtitulo">Ingresa el código de 6 dígitos de tu aplicación autenticadora.</p>
+
+        <div class="mfa-verify-icon">🔐</div>
+
+        <form method="POST" class="mfa-form">
+            <div class="grupo-formulario">
+                <label for="code">Código MFA</label>
+                <input type="text" id="code" name="code" placeholder="000000" maxlength="6" pattern="\d{6}" required
+                    autofocus autocomplete="one-time-code">
+            </div>
+
+            <button type="submit" class="btn-primario">Verificar Identidad</button>
+
+            <div class="mfa-help">
+                <p>¿Tienes problemas? <a href="{{ url_for('auth.logout') }}" class="enlace-texto">Cerrar sesión e
+                        intentar de nuevo</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .mfa-verify-icon {
+        font-size: 4rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+    }
+
+    #code {
+        text-align: center;
+        font-size: 2rem;
+        letter-spacing: 0.6rem;
+        font-weight: 800;
+        color: var(--primario);
+        padding: 20px !important;
+    }
+
+    #code::placeholder {
+        letter-spacing: normal;
+        font-size: 1.2rem;
+        font-weight: 400;
+        opacity: 0.5;
+    }
+
+    .mfa-help {
+        text-align: center;
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: var(--texto-atenuado);
+    }
+</style>
+{% endblock %}

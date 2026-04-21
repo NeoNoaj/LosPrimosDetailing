@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block hide_nav %}True{% endblock %}
+{% block title %}Recuperar Correo - LosPrimos{% endblock %}
+
+{% block content %}
+<div class="envoltorio-autenticacion">
+    <div class="contenedor glass-card">
+        <h1>Recuperar Usuario</h1>
+        <p class="subtitulo">Ingresa tus datos para encontrar tu cuenta.</p>
+
+        <form method="POST" class="auth-form">
+            <div class="grupo-formulario">
+                <label for="name">Nombre Completo</label>
+                <input type="text" id="name" name="name" placeholder="Tu nombre registrado" required>
+            </div>
+
+            <div class="grupo-formulario">
+                <label for="plate">Placa de Vehículo</label>
+                <input type="text" id="plate" name="plate" placeholder="ABC-123" required>
+            </div>
+
+            <button type="submit" class="btn-primario">Buscar Cuenta</button>
+            
+            <a href="{{ url_for('auth.login') }}" class="enlace-volver" style="justify-content: center; margin-top: 1.5rem; margin-bottom: 0;">
+                <span>← Volver al Login</span>
+            </a>
+        </form>
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+    }
+</style>
+{% endblock %}

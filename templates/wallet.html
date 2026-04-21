@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Billetera - Los Primos Detailing{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+<script>
+    // Lógica de PayPal (Mantenida)
+    paypal.Buttons({
+        createOrder: function (data, actions) {
+            return actions.order.create({
+                purchase_units: [{ amount: { value: '10.00' } }]
+            });
+        },
+        onApprove: function (data, actions) {
+            return actions.order.capture().then(function (details) {
+                fetch('/api/v1/wallet/paypal-callback', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        orderID: data.orderID,
+                        amount: 5200,
+                        user_id: {{ user.id if user else 0 }}
+                    })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    alert('Pago completado por ' + details.payer.name.given_name + '. ' + result.message);
+                    window.location.reload();
+                });
+            });
+        }
+    }).render('#paypal-button-container');
+
+    // Función para manejar el BIN de la tarjeta (Animación/Color) y Vista Previa
+    function checkCardType(number) {
+        const bin = number.replace(/\D/g, '').substring(0, 4);
+        if (bin.length === 4) {
+            fetch(`http://127.0.0.1:3000/api/check-bin/${bin}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const cardContainer = document.getElementById('preview-card');
+                        cardContainer.style.background = data.color || '#333';
+                        document.getElementById('bank-label').innerText = data.name;
+                    }
+                }).catch(() => { });
+        } else if (bin.length < 4) {
+            document.getElementById('preview-card').style.background = '#333';
+            document.getElementById('bank-label').innerText = 'Sistema Bancario Local';
+        }
+    }
+
+    function updateCardPreview() {
+        const numberInput = document.getElementById('card-number-input');
+        const holderInput = document.getElementById('card-holder-input');
+        const numberPreview = document.getElementById('card-number-preview');
+        const holderPreview = document.getElementById('card-holder-preview');
+
+        // Formatear número con espacios cada 4 dígitos
+        let val = numberInput.value.replace(/\D/g, '');
+        let formatted = val.match(/.{1,4}/g)?.join(' ') || '';
+        numberInput.value = formatted;
+
+        numberPreview.innerText = formatted || '•••• •••• •••• ••••';
+        holderPreview.innerText = holderInput.value.toUpperCase() || 'NOMBRE DEL TITULAR';
+        
+        checkCardType(formatted);
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Mi Billetera</h2>
+        <p class="subtitulo">Gestiona tus puntos y cuentas bancarias</p>
+    </div>
+    {% if exchange_rate %}
+    <div
+        style="text-align: right; font-size: 0.85rem; background: rgba(0,0,0,0.05); padding: 5px 15px; border-radius: 20px;">
+        <span style="color: var(--primario); font-weight: bold;">USD/CRC:</span>
+        ₡{{ exchange_rate.compra }} | ₡{{ exchange_rate.venta }}
+        <a href="{{ url_for('main.api_health') }}"
+            style="display: block; font-size: 0.65rem; color: var(--primario); text-decoration: none;">⚡ Ver Salud de
+            APIs</a>
+    </div>
+    {% endif %}
+</header>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+
+    <!-- 💳 SECCIÓN 1: SALDO APP (PUNTOS) -->
+    <section>
+        <div class="tarjeta-premium"
+            style="background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%); color: white; border: none; padding: 2.5rem;">
+            <p style="text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; font-size: 0.8rem;">Puntos del
+                Taller</p>
+            <h2 style="font-size: 3rem; margin: 0.5rem 0;">₡{{ user.wallet_balance or 0 }}</h2>
+            <div style="margin-top: 2rem;">
+                <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem;">Recarga rápida con PayPal</p>
+                <div id="paypal-button-container"></div>
+                
+                <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+                    <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.5rem;">Recarga Manual (Simulada)</p>
+                    <form action="{{ url_for('main.wallet_recharge') }}" method="POST" style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="amount" placeholder="Monto" required 
+                               style="flex-grow: 1; padding: 8px; border-radius: 6px; border: none; color: black;">
+                        <button type="submit" class="btn-primario" style="background: white; color: var(--primario); padding: 8px 15px;">Recargar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🏦 SECCIÓN 2: CUENTA BANCARIA VINCULADA -->
+    <section>
+        {% if linked_card and bank_account %}
+        <div class="tarjeta-premium" style="border-left: 5px solid var(--exito); background: #f8fff9; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                <div>
+                    <h3 style="color: var(--exito); margin: 0;">🏦 Banco Vinculado</h3>
+                    <p style="font-size: 0.85rem; opacity: 0.7;">Titular: {{ linked_card.card_holder }}</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                    <span
+                        style="background: var(--exito); color: white; padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: bold;">VERIFICADA</span>
+                    <form action="{{ url_for('main.wallet_unlink_card') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas desvincular esta tarjeta?')">
+                        <button type="submit" style="background: #fffafa; color: #d32f2f; border: 1px solid #ffcdd2; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: bold; transition: all 0.3s;">
+                            🗑️ Quitar Tarjeta
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
+                <p style="font-size: 0.7rem; text-transform: uppercase; color: var(--texto-atenuado);">IBAN {{
+                    bank_account.moneda }}</p>
+                <code
+                    style="display: block; font-size: 1.1rem; color: var(--primario); font-weight: bold; margin: 5px 0;">{{ bank_account.iban }}</code>
+                <div
+                    style="margin-top: 1rem; border-top: 1px dashed #eee; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem; opacity: 0.6;">Saldo en Banco</span>
+                    <h3 style="margin: 0;">₡{{ "{:,.2f}".format(bank_account.saldo|float) }}</h3>
+                </div>
+            </div>
+
+            <p style="font-size: 0.75rem; margin-top: 1.5rem; color: var(--texto-atenuado); text-align: center;">
+                💳 Tarjeta terminada en **{{ linked_card.card_number_last4 }}**
+            </p>
+        </div>
+        {% else %}
+        <div class="tarjeta-premium"
+            style="text-align: center; border: 2px dashed #ccc; background: #fafafa; padding: 3rem 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🏦</div>
+            <h3>Sin Cuenta Vinculada</h3>
+            <p style="font-size: 0.9rem; color: var(--texto-atenuado); margin-bottom: 2rem;">Conecta tu cuenta bancaria
+                ingresando los datos de tu tarjeta.</p>
+            <button onclick="document.getElementById('modal-vincular').style.display='flex'" class="btn-primario">
+                Vincular Tarjeta Bancaria
+            </button>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<!-- 📜 HISTORIAL UNIFICADO -->
+<section style="margin-top: 3rem;">
+    <h3 style="margin-bottom: 1.5rem;">Historial de Movimientos</h3>
+    <div class="tarjeta-premium" style="padding: 0; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: rgba(0,0,0,0.03); font-size: 0.85rem;">
+                <tr>
+                    <th style="padding: 1.2rem; text-align: left;">Fecha</th>
+                    <th style="padding: 1.2rem; text-align: left;">Concepto / Origen</th>
+                    <th style="padding: 1.2rem; text-align: right;">Monto</th>
+                    <th style="padding: 1.2rem; text-align: center;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if bank_movements %}
+                {% for mov in bank_movements %}
+                <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <td style="padding: 1rem; font-size: 0.85rem;">{{ mov.fecha.split('T')[0] }}</td>
+                    <td style="padding: 1rem;">
+                        <span
+                            style="font-size: 0.7rem; background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">BANCO</span><br>
+                        <span style="font-weight: 500;">{{ mov.detalle }}</span>
+                    </td>
+                    <td
+                        style="padding: 1rem; text-align: right; font-weight: bold; color: {% if mov.monto|float > 0 %}var(--exito){% else %}var(--error){% endif %};">
+                        ₡{{ "{:,.2f}".format(mov.monto|float|abs) }}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;"><span
+                            style="color: var(--exito); font-size: 0.8rem;">● Completado</span></td>
+                </tr>
+                {% endfor %}
+                {% elif user.transactions %}
+                {% for trans in user.transactions %}
+                <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <td style="padding: 1rem; font-size: 0.85rem;">{{ trans.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td style="padding: 1rem;">
+                        <span
+                            style="font-size: 0.7rem; background: #f3e5f5; color: #7b1fa2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">PUNTOS</span><br>
+                        <span style="font-weight: 500;">{{ trans.description }}</span>
+                    </td>
+                    <td
+                        style="padding: 1rem; text-align: right; font-weight: bold; color: {% if trans.type == 'credit' %}var(--exito){% else %}var(--error){% endif %};">
+                        ₡{{ "{:,.2f}".format(trans.amount) }}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">Procesado</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="padding: 4rem; text-align: center; opacity: 0.5;">No hay movimientos para
+                        mostrar.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- 🔒 MODAL DE VINCULACIÓN -->
+<div id="modal-vincular"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="tarjeta-premium" style="width: 90%; max-width: 450px; padding: 2.5rem; position: relative;">
+        <button onclick="document.getElementById('modal-vincular').style.display='none'"
+            style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+
+        <h3 style="margin-bottom: 0.5rem;">Vincular Tarjeta</h3>
+        <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 2rem;">Ingresa los datos de tu tarjeta bancaria para
+            sincronizar tu saldo.</p>
+
+        <form action="{{ url_for('main.wallet_link_card') }}" method="POST"
+            style="display: flex; flex-direction: column; gap: 1.2rem;">
+            <div>
+                <label style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 5px;">Titular de la
+                    Tarjeta</label>
+                <input type="text" id="card-holder-input" name="card_holder" required placeholder="Nombre como aparece en la tarjeta"
+                    oninput="updateCardPreview()"
+                    style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+            </div>
+            <div>
+                <label style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 5px;">Número de
+                    Tarjeta</label>
+                <input type="text" id="card-number-input" name="card_number" required placeholder="XXXX XXXX XXXX XXXX" maxlength="19"
+                    oninput="updateCardPreview()"
+                    style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 5px;">Expira
+                        (AAAA-MM-DD)</label>
+                    <input type="text" name="expiry_date" required placeholder="YYYY-MM-DD"
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 5px;">CVV</label>
+                    <input type="password" name="cvv" required placeholder="***" maxlength="3"
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                </div>
+            </div>
+
+            <div id="preview-card"
+                style="margin-top: 1rem; background: #333; color: white; padding: 1.5rem; border-radius: 12px; transition: all 0.5s ease; min-height: 160px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <p id="bank-label" style="font-size: 0.7rem; text-transform: uppercase; margin: 0; opacity: 0.8;">Sistema Bancario Local</p>
+                </div>
+                
+                <p id="card-number-preview" style="letter-spacing: 2px; font-size: 1.2rem; margin: 20px 0; font-family: monospace;">•••• •••• •••• ••••</p>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <p id="card-holder-preview" style="font-size: 0.8rem; text-transform: uppercase; margin: 0; letter-spacing: 1px;">NOMBRE DEL TITULAR</p>
+                    <div style="width: 35px; height: 25px; background: rgba(255,255,255,0.2); border-radius: 4px;"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primario" style="margin-top: 1rem; width: 100%;">
+                Verificar y Vincular
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

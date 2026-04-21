@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Consejos - LosPrimosDetailing{% endblock %}
+
+{% block content %}
+<header class="barra-superior">
+    <div>
+        <h2>Consejos de Detailing</h2>
+        <p class="subtitulo">Aprende a cuidar tu vehículo como un experto</p>
+    </div>
+</header>
+
+<section class="guia-contenido" style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+    <div class="tarjeta-premium" style="padding: 2.5rem; border-left: 8px solid #3498db;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            <span style="font-size: 2.5rem;">🚿</span>
+            <h3 style="color: #3498db; font-size: 1.5rem;">Recomendaciones de Pre-lavado</h3>
+        </div>
+        <p style="color: var(--texto-atenuado); margin-bottom: 1.2rem; font-weight: 500;">Esta etapa elimina la suciedad
+            abrasiva antes de tocar la pintura.</p>
+        <ul style="padding-left: 1.5rem; color: var(--texto-atenuado); line-height: 1.8;">
+            <li><strong style="color: var(--primario);">Llantas primero:</strong> Evita que el ferodo de freno salte a
+                la pintura ya limpia.</li>
+            <li><strong style="color: var(--primario);">Enjuague a presión:</strong> Remueve el 80% de la suciedad
+                suelta.</li>
+            <li><strong style="color: var(--primario);">Snow Foam:</strong> Crea una capa lubricante que encapsula la
+                tierra por 5 min.</li>
+            <li><strong style="color: var(--primario);">Pincel de detalle:</strong> Limpia emblemas y rejillas con la
+                espuma actuando.</li>
+        </ul>
+    </div>
+
+    <div class="tarjeta-premium" style="padding: 2.5rem; border-left: 8px solid #2ecc71;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            <span style="font-size: 2.5rem;">✨</span>
+            <h3 style="color: #2ecc71; font-size: 1.5rem;">Recomendaciones de Post-lavado</h3>
+        </div>
+        <p style="color: var(--texto-atenuado); margin-bottom: 1.2rem; font-weight: 500;">Protege y sella el trabajo
+            realizado para un acabado duradero.</p>
+        <ul style="padding-left: 1.5rem; color: var(--texto-atenuado); line-height: 1.8;">
+            <li><strong style="color: var(--primario);">Secado Premium:</strong> Usa una toalla de microfibra de 1200
+                GSM sin arrastrar.</li>
+            <li><strong style="color: var(--primario);">Sellado Cerámico:</strong> Aplica protección UV para repeler el
+                agua y polvo.</li>
+            <li><strong style="color: var(--primario);">Acondicionado de Gomas:</strong> Nutre los plásticos para evitar
+                que se tornen grises.</li>
+            <li><strong style="color: var(--primario);">Limpieza de cristales:</strong> Usa un producto libre de alcohol
+                para un brillo puro.</li>
+        </ul>
+    </div>
+</section>
+{% endblock %}
