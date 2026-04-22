@@ -636,8 +636,8 @@ app.post('/api/payment-method', async (req, res) => {
     const { user_id, card_holder, card_number, cvv, expiry_date } = req.body;
 
     try {
-        console.log(`📡 Intentando verificar tarjeta ${card_number.slice(-4)} en el banco...`);
-        const bankUrl = process.env.BANK_SERVICE_URL || 'http://127.0.0.1:3001/api';
+        const bankUrl = process.env.BANK_SERVICE_URL || 'https://practical-albattani.138-59-135-33.plesk.page/api';
+        console.log(`📡 Intentando verificar tarjeta ${card_number.slice(-4)} en el banco... URL: ${bankUrl}/tarjetas/verificar`);
         const bankResp = await axios.post(`${bankUrl}/tarjetas/verificar`, {
             numero: card_number,
             cvv: cvv,
