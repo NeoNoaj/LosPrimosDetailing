@@ -637,7 +637,8 @@ app.post('/api/payment-method', async (req, res) => {
 
     try {
         console.log(`📡 Intentando verificar tarjeta ${card_number.slice(-4)} en el banco...`);
-        const bankResp = await axios.post('http://127.0.0.1:3001/api/tarjetas/verificar', {
+        const bankUrl = process.env.BANK_SERVICE_URL || 'http://127.0.0.1:3001/api';
+        const bankResp = await axios.post(`${bankUrl}/tarjetas/verificar`, {
             numero: card_number,
             cvv: cvv,
             fecha_vencimiento: expiry_date
