@@ -31,8 +31,8 @@ class ExternalServices:
         
         # Fallback de Seguridad Final (In-App)
         return {
-            "compra": 458.0, 
-            "venta": 472.0, 
+            "compra": 452.95, 
+            "venta": 457.14, 
             "moneda": "CRC", 
             "actualizado": datetime.now().strftime("%Y-%m-%d"),
             "status": "FALLBACK-SAFE",
