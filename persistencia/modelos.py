@@ -84,6 +84,24 @@ class Review:
         self.comment = kwargs.get('comment', '')
         self.created_at = _parse_date(kwargs.get('created_at'))
 
+    @property
+    def author(self):
+        from persistencia.api_client import APIClient
+        user_data = APIClient.get(f"/users/{self.user_id}")
+        if user_data:
+            return User(**user_data)
+        # Fallback author if user not found
+        return User(name="Usuario Anónimo")
+
+    @property
+    def service(self):
+        from persistencia.api_client import APIClient
+        service_data = APIClient.get_product(self.service_id)
+        if service_data:
+            return Product(**service_data)
+        # Fallback service if not found
+        return Product(name="Servicio General")
+
 class Vehicle:
     def __init__(self, **kwargs):
         self.id = kwargs.get('id')
