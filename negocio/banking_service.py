@@ -3,7 +3,7 @@ import os
 
 class BankingService:
     BANK_URL = os.environ.get('BANK_SERVICE_URL', "https://practical-albattani.138-59-135-33.plesk.page/api")
-    LOCAL_DB_URL = os.environ.get('DATABASE_SERVICE_URL', "http://127.0.0.1:3000/api")
+    LOCAL_DB_URL = os.environ.get('DATABASE_SERVICE_URL', "https://practical-albattani.138-59-135-33.plesk.page/api")
 
     @classmethod
     def get_linked_card(cls, user_id):
