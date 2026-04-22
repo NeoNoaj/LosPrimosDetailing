@@ -9,16 +9,16 @@ process.on('uncaughtException', (err) => console.error('EXCEPCIÓN:', err.messag
 process.on('unhandledRejection', (reason) => console.error('PROMESA RECHAZADA:', reason));
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
 const dbConfig = {
-    host: 'tiusr4pl.cuc-carrera-ti.ac.cr',
-    user: 'JoanMoraR',
-    password: 'BerserkCR21.',
-    database: 'losprimosdetailing',
+    host: process.env.DB_HOST || 'tiusr4pl.cuc-carrera-ti.ac.cr',
+    user: process.env.DB_USER || 'JoanMoraR',
+    password: process.env.DB_PASSWORD || 'BerserkCR21.',
+    database: process.env.DB_NAME || 'losprimosdetailing',
     connectionLimit: 10
 };
 

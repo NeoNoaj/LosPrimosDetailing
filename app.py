@@ -6,6 +6,9 @@ from presentacion.rutas.api import api_bp
 from persistencia.api_client import APIClient
 from persistencia.modelos import Localidad, User, Product
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
