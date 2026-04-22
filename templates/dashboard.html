@@ -141,73 +141,159 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Cuadrícula de Acciones Rápidas -->
-<section class="cuadricula-estadisticas">
-    <!-- Impacto Ambiental (Nuevo) -->
-    <div class="tarjeta-premium" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
-        <div class="icono-tarjeta">💧</div>
-        <strong style="color: #2e7d32;">Impacto Ambiental</strong>
-        <p id="water-saving-text" style="font-size: 0.8rem; margin-top: 8px;">Calculando tu impacto...</p>
-    </div>
+<!-- Cuadrícula de Acciones Rápidas (Estilo Neon/Bancario) -->
+<style>
+.quick-access-wrapper {
+    background: white;
+    border-radius: var(--radio-medio);
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--sombra-suave);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+.quick-access-wrapper h3 {
+    color: var(--primario-oscuro);
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem 0.5rem;
+}
+@media(max-width: 480px) {
+    .quick-access-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+.quick-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--texto-principal);
+    text-align: center;
+    gap: 8px;
+    transition: var(--transicion);
+}
+.quick-action-item .icon-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    border: 1px solid var(--primario-claro);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+.quick-action-item:hover .icon-container {
+    border-color: var(--primario);
+    box-shadow: 0 5px 15px rgba(50, 130, 184, 0.2);
+    background: rgba(50, 130, 184, 0.05);
+    transform: translateY(-2px);
+}
+.quick-action-item svg {
+    width: 30px;
+    height: 30px;
+    stroke: var(--primario-claro);
+}
+.quick-action-item span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    opacity: 0.9;
+}
+.preview-badge {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    background: var(--error);
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+    display: none;
+    border: 2px solid #0f172a;
+}
+</style>
 
-    <div class="tarjeta-premium">
-        <div class="icono-tarjeta">🚗</div>
-        <a href="{{ url_for('main.vehicles') }}">
-            <strong>Mis vehículos</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Administra tus autos registrados</p>
+<section class="quick-access-wrapper">
+    <h3>Accesos Rápidos</h3>
+    <div class="quick-access-grid">
+        <a href="{{ url_for('main.vehicles') }}" class="quick-action-item">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 00-.84-.99L16 11l-2.7-3.6a2 2 0 00-1.6-.8H9.3a2 2 0 00-1.6.8L5 11l-5.16.86a1 1 0 00-.84.99V16h3m10 0a2 2 0 100 4 2 2 0 000-4zm-10 0a2 2 0 100 4 2 2 0 000-4z"></path></svg>
+            </div>
+            <span>Vehículos</span>
         </a>
-    </div>
-    <div class="tarjeta-premium">
-        <div class="icono-tarjeta">📅</div>
-        <a href="{{ url_for('main.quotes') }}">
-            <strong>Reservar</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Reserva tu próximo lavado</p>
-            <div id="dash-wait-preview" style="margin-top: 10px; font-size: 0.7rem; color: var(--primario); font-weight: bold; background: white; padding: 2px 6px; border-radius: 4px; display: none;">⏱️ ...</div>
+
+        <a href="{{ url_for('main.quotes') }}" class="quick-action-item">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="15" r="1"></circle></svg>
+                <div id="dash-wait-preview" class="preview-badge">...</div>
+            </div>
+            <span>Reservar</span>
         </a>
+
+        <a href="{{ url_for('main.wallet') }}" class="quick-action-item">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            </div>
+            <span>Billetera</span>
+        </a>
+
+        <a href="{{ url_for('main.reviews') }}" class="quick-action-item">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+            <span>Reseñas</span>
+        </a>
+
+        <a href="{{ url_for('main.guides') }}" class="quick-action-item">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6"></path><path d="M12 2v2"></path><path d="M12 15v2"></path><path d="M4 12H2"></path><path d="M22 12h-2"></path><path d="M17 12a5 5 0 11-10 0 5 5 0 0110 0z"></path></svg>
+            </div>
+            <span>Consejos</span>
+        </a>
+
+        <!-- Ambient impact - Non link just display -->
+        <div class="quick-action-item" style="cursor: default;">
+            <div class="icon-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"></path></svg>
+            </div>
+            <span>Ambiental</span>
+            <span id="water-saving-text" style="font-size: 0.65rem; color: #4ade80;">...</span>
+        </div>
+
+        {% if user.is_admin %}
+        <a href="{{ url_for('auth.admin_recover_user') }}" class="quick-action-item">
+            <div class="icon-container" style="border-color: rgba(244, 63, 94, 0.4); border-style: dashed;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <span style="color: #f43f5e;">Admin</span>
+        </a>
+        {% endif %}
     </div>
+</section>
 
 <script>
     // Preview de tiempo de espera en el dashboard
-    fetch('/api/v1/service/wait-time')
-        .then(res => res.json())
-        .then(data => {
-            const preview = document.getElementById('dash-wait-preview');
-            preview.innerText = `⏱️ Espera: ${data.tiempo_espera_min} min (${data.carga_actual})`;
-            preview.style.display = 'inline-block';
-            if(data.carga_actual === 'ALTA') preview.style.color = 'var(--error)';
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/v1/service/wait-time')
+            .then(res => res.json())
+            .then(data => {
+                const preview = document.getElementById('dash-wait-preview');
+                preview.innerText = `${data.tiempo_espera_min}m`;
+                preview.style.display = 'inline-block';
+                if(data.carga_actual === 'ALTA') preview.style.background = 'var(--error)';
+                else preview.style.background = 'var(--exito)';
+            });
+    });
 </script>
-    <div class="tarjeta-premium">
-        <div class="icono-tarjeta">💳</div>
-        <a href="{{ url_for('main.wallet') }}">
-            <strong>Billetera</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Saldo: ₡{{ user.wallet_balance or 0 }}</p>
-        </a>
-    </div>
-    <div class="tarjeta-premium">
-        <div class="icono-tarjeta">⭐</div>
-        <a href="{{ url_for('main.reviews') }}">
-            <strong>Reseñas</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Califica nuestro servicio</p>
-        </a>
-    </div>
-    <div class="tarjeta-premium">
-        <div class="icono-tarjeta">💡</div>
-        <a href="{{ url_for('main.guides') }}">
-            <strong>Consejos</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Tips de pre y post lavado</p>
-        </a>
-    </div>
-    {% if user.is_admin %}
-    <div class="tarjeta-premium" style="border: 2px dashed var(--primario-claro); background: rgba(50, 130, 184, 0.05);">
-        <div class="icono-tarjeta">🛡️</div>
-        <a href="{{ url_for('auth.admin_recover_user') }}">
-            <strong>Admin: Recuperación</strong>
-            <p style="font-size: 0.85rem; margin-top: 8px;">Ayudar a un cliente con su cuenta</p>
-        </a>
-    </div>
-    {% endif %}
-</section>
 
 <!-- Tareas Próximas / Recordatorios -->
 <section class="seccion-recordatorio">

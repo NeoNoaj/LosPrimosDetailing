@@ -27,7 +27,7 @@ def register():
         
         if password != confirm_password:
             flash('Las contraseñas no coinciden', 'error')
-            return render_template('register.html')
+            return render_template('register.html', form_data=request.form)
         
         user, error = register_user(email, password, name, pais, provincia, canton, distrito, cedula, codelec)
         if user:
@@ -35,8 +35,9 @@ def register():
             return redirect(url_for('auth.login'))
         else:
             flash(error, 'error')
+            return render_template('register.html', form_data=request.form)
             
-    return render_template('register.html')
+    return render_template('register.html', form_data={})
 
 @auth_bp.route('/api/localidades')
 def api_localidades():

@@ -28,7 +28,9 @@
         {% if not hide_nav %}
         <nav class="barra-lateral">
             <header>
-                <h1>LosPrimosDetailing</h1>
+                <a href="{{ url_for('main.dashboard') }}" style="text-decoration: none; color: inherit;">
+                    <h1>LosPrimosDetailing</h1>
+                </a>
                 {% if user %}
                 <div class="perfil-lateral" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.name }}" alt="Avatar" style="width: 45px; height: 45px; background: rgba(255,255,255,0.1); border-radius: 50%; padding: 2px;">
@@ -109,7 +111,9 @@
         <!-- Espacio de Trabajo Principal -->
         <main class="contenido-principal">
             <header class="barra-superior-movil">
-                <h1 class="logo-movil">LosPrimos</h1>
+                <a href="{{ url_for('main.dashboard') }}" style="text-decoration: none; color: inherit;">
+                    <h1 class="logo-movil">LosPrimos</h1>
+                </a>
                 {% if user %}
                 {% if hide_nav %}
                     <a href="{{ url_for('auth.logout') }}" class="avatar-movil flex-centrado" style="text-decoration: none; font-size: 1.2rem;">🚪</a>
