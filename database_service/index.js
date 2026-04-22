@@ -488,12 +488,12 @@ app.get('/api/localidades', async (req, res) => {
         if (tipo === 'pais') {
             return res.json([{ id: 'CR', nombre: 'Costa Rica' }]);
         } else if (tipo === 'provincia') {
-            query = 'SELECT DISTINCT provincia as nombre FROM padron_tse.distritos ORDER BY nombre';
+            query = 'SELECT DISTINCT provincia as nombre FROM tse_losprimosdetailing.distritos ORDER BY nombre';
         } else if (tipo === 'canton') {
-            query = 'SELECT DISTINCT canton as nombre FROM padron_tse.distritos WHERE provincia = ? ORDER BY nombre';
+            query = 'SELECT DISTINCT canton as nombre FROM tse_losprimosdetailing.distritos WHERE provincia = ? ORDER BY nombre';
             params = [provincia];
         } else if (tipo === 'distrito') {
-            query = 'SELECT distrito as nombre, codelec FROM padron_tse.distritos WHERE provincia = ? AND canton = ? ORDER BY nombre';
+            query = 'SELECT distrito as nombre, codelec FROM tse_losprimosdetailing.distritos WHERE provincia = ? AND canton = ? ORDER BY nombre';
             params = [provincia, canton];
         } else {
             return res.status(400).json({ error: 'Tipo inválido o faltan parámetros' });
@@ -506,7 +506,7 @@ app.get('/api/localidades', async (req, res) => {
 
 app.get('/api/localidades/:id', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM padron_tse.distritos WHERE codelec = ?', [req.params.id]);
+        const [rows] = await pool.query('SELECT * FROM tse_losprimosdetailing.distritos WHERE codelec = ?', [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Localidad no encontrada' });
         const r = rows[0];
         res.json({ id: r.codelec, nombre: r.distrito, tipo: 'distrito', canton: r.canton, provincia: r.provincia });
@@ -689,8 +689,8 @@ app.get('/api/padron/:cedula', async (req, res) => {
         const cedula = req.params.cedula;
         const [rows] = await pool.query(`
             SELECT p.nombre, p.apellido1, p.apellido2, d.provincia, d.canton, d.distrito, d.codelec
-            FROM padron_tse.padron p
-            JOIN padron_tse.distritos d ON p.codelec = d.codelec
+            FROM tse_losprimosdetailing.padron p
+            JOIN tse_losprimosdetailing.distritos d ON p.codelec = d.codelec
             WHERE p.cedula = ?
         `, [cedula]);
 

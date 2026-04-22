@@ -8,19 +8,46 @@
     "theme_color": "#0f172a",
     "orientation": "portrait-primary",
     "icons": [
-      {
-        "src": "/static/icons/partes.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
-      },
-      {
-        "src": "/static/icons/logo.ico",
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "any maskable"
-      }
+        {
+            "src": "/static/icons/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/static/icons/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/static/icons/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/static/icons/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
     ],
-    "categories": ["business", "productivity", "detailing", "vehicular", "automotriz", "servicios", "lavado", "pulido", "encerado", "sellado", "limpieza", "tapicería", "desinfección", "restauración", "detallado", "vehicular", "automotriz", "servicios", "lavado", "pulido", "encerado", "sellado", "limpieza", "tapicería", "desinfección", "restauración"],
+    "categories": [
+        "business",
+        "productivity",
+        "detailing",
+        "vehicular",
+        "automotriz",
+        "servicios",
+        "lavado",
+        "pulido",
+        "encerado",
+        "sellado",
+        "limpieza",
+        "tapicería",
+        "desinfección",
+        "restauración"
+    ],
     "lang": "es"
 }

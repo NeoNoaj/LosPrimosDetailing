@@ -1,7 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from persistencia.modelos import User, Product, Review, Quote, GalleryImage, Vehicle, WalletTransaction
-from persistencia.api_client import APIClient
-from negocio.vehicle_service import get_user_vehicles, register_vehicle
+from negocio.user_service import UserService
+from negocio.product_service import ProductService
+from negocio.quote_service import QuoteService
+from negocio.loyalty_service import LoyaltyService
+
+from negocio.vehicle_service import get_user_vehicles, register_vehicle, get_vehicle, add_gallery_image
 from negocio.external_services import ExternalServices
 from negocio.banking_service import BankingService
 from datetime import datetime
@@ -14,9 +18,8 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/dashboard')
 def dashboard():
     if 'user_id' in session:
-        user_data = APIClient.get_user_by_id(session['user_id'])
-        if user_data:
-            user = User(**user_data)
+        user = UserService.get_user_by_id(session['user_id'])
+        if user:
             vehicles = get_user_vehicles(user.id)
             
             # [API CONSUMO 1 & 4] Ubicación y Clima
@@ -38,8 +41,7 @@ def dashboard():
 @main_bp.route('/services')
 def list_services():
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    products_data = APIClient.get_products()
-    products = [Product(**p) for p in products_data]
+    products = ProductService.get_all_products()
     
     # [API CONSUMO 5] Tipo de Cambio para conversión en UI
     rate = ExternalServices.get_bccr_exchange_rate()
@@ -49,17 +51,15 @@ def list_services():
 @main_bp.route('/product/<int:product_id>')
 def product_detail(product_id):
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    product_data = APIClient.get_product(product_id)
-    if not product_data:
+    product = ProductService.get_product(product_id)
+    if not product:
         return "Producto no encontrado", 404
-    product = Product(**product_data)
     return render_template('product_detail.html', product=product)
 
 @main_bp.route('/wallet')
 def wallet():
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    user_data = APIClient.get_user_by_id(session['user_id'])
-    user = User(**user_data)
+    user = UserService.get_user_by_id(session['user_id'])
     
     token_bccr = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJCQ0NSLVNEREUiLCJzdWIiOiJqb2FubWF1cmljaW9tb3JhMjFAZ21haWwuY29tIiwiYXVkIjoiU0RERS1TaXRpb0V4dGVybm8iLCJleHAiOjI1MzQwMjMwMDgwMCwibmJmIjoxNzc1NjAwNTcxLCJpYXQiOjE3NzU2MDA1NzEsImp0aSI6IjE0ZjNlNmE0LTMxNTMtNDcxOS04NGU1LWU0MzJlODc0NDE4OCIsImVtYWlsIjoiam9hbm1hdXJpY2lvbW9yYTIxQGdtYWlsLmNvbSJ9.Tw1pl5vCwWVzxGEc3YHH9twAKdy0KWXBrHeJiYFTcfc"
     rate = ExternalServices.get_bccr_exchange_rate(token_bccr)
@@ -76,8 +76,7 @@ def wallet():
             bank_movements = [m for m in all_bank_movements if "Pago" in m.get('detalle', '')]
 
     # También cargamos y filtramos transacciones de la wallet interna
-    all_transactions = APIClient.get_user_transactions(user.id)
-    user.transactions = [WalletTransaction(**t) for t in all_transactions if "Pago" in t.get('description', '')]
+    user.transactions = UserService.get_user_transactions(user.id, filter_keyword="Pago")
 
 
     return render_template('wallet.html', 
@@ -161,39 +160,28 @@ def api_health():
     for api in consumed:
         if "error" in api["data"] or not api["data"]: api["ok"] = False
 
-    user_data = APIClient.get_user_by_id(uid)
-    user = User(**user_data) if user_data else None
+    user = UserService.get_user_by_id(uid)
 
     return render_template('api_health.html', user=user, exposed_status=exposed, consumed_status=consumed)
 
 @main_bp.route('/wallet/recharge', methods=['POST'])
 def wallet_recharge():
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    user_data = APIClient.get_user_by_id(session['user_id'])
-    user = User(**user_data)
+    user = UserService.get_user_by_id(session['user_id'])
     amount = request.form.get('amount', type=float)
     
-    if amount and amount > 0:
-        new_balance = (user.wallet_balance or 0) + amount
-        APIClient.update_user(user.id, {"wallet_balance": new_balance})
-        
-        APIClient.create_transaction({
-            "user_id": user.id,
-            "amount": amount,
-            "description": "Recarga de saldo",
-            "type": "credit"
-        })
-        flash(f'¡Recarga de ₡{amount} realizada con éxito!', 'success')
+    success, msg = UserService.recharge_wallet(user.id, amount)
+    if success:
+        flash(msg, 'success')
     else:
-        flash('Monto de recarga inválido.', 'error')
+        flash(msg, 'error')
         
     return redirect(url_for('main.wallet'))
 
 @main_bp.route('/vehicles', methods=['GET', 'POST'])
 def vehicles():
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    user_data = APIClient.get_user_by_id(session['user_id'])
-    user = User(**user_data)
+    user = UserService.get_user_by_id(session['user_id'])
     
     if request.method == 'POST':
         plate = request.form['plate']
@@ -229,33 +217,16 @@ def quotes():
         size = request.form.get('size', 'sedan')
         dirt = request.form.get('dirt', 'leve')
         
-        # Obtener precio base real
-        product_data = APIClient.get_product(service_id)
-        base_price = product_data.get('price', 12000) if product_data else 12000
-        
-        # Aplicar multiplicadores
-        size_mult = {"sedan": 1.0, "suv": 1.3, "pickup": 1.5, "moto": 0.6}.get(size, 1.0)
-        dirt_mult = {"leve": 1.0, "moderada": 1.2, "extrema": 1.6}.get(dirt, 1.0)
-        total_price = base_price * size_mult * dirt_mult
-        
-        # Enriquecer comentarios con metadatos del estimador
-        full_comments = f"[{size.upper()} / Suciedad: {dirt.upper()}] {comments}"
-        
-        APIClient.create_quote({
-            "user_id": user_id,
-            "service_id": service_id,
-            "location": location,
-            "comments": full_comments,
-            "total_price": total_price
-        })
-        flash('¡Solicitud de cotización enviada con éxito!', 'success')
+        success, msg = QuoteService.create_quote(user_id, service_id, location, comments, size, dirt)
+        if success:
+            flash(msg, 'success')
+        else:
+            flash(msg, 'error')
         return redirect(url_for('main.quotes'))
 
-    products_data = APIClient.get_products()
-    services = [Product(**p) for p in products_data if p['category'] == 'service']
+    services = ProductService.get_all_services()
     
-    quotes_data = APIClient.get_user_quotes(user_id)
-    user_quotes = [Quote(**q) for q in quotes_data]
+    user_quotes = QuoteService.get_user_quotes(user_id)
     
     from negocio.banking_service import BankingService
     has_card = BankingService.get_linked_card(user_id) is not None
@@ -267,21 +238,19 @@ def pay_quote(quote_id):
     if 'user_id' not in session: return redirect(url_for('auth.login'))
     
     method = request.form.get('method', 'wallet')
-    result = APIClient.pay_quote(quote_id, method=method)
-    
-    if result.get('success'):
-        flash(result.get('message', '¡Pago realizado con éxito!'), 'success')
+    success, msg = QuoteService.pay_quote(quote_id, method=method)
+    if success:
+        flash(msg, 'success')
     else:
         current_uid = session.get('user_id')
-        flash(f"Error al pagar (Sesión UID: {current_uid}): {result.get('error', 'Desconocido')}", 'error')
+        flash(f"Error al pagar (Sesión UID: {current_uid}): {msg}", 'error')
         
     return redirect(url_for('main.quotes'))
 
 @main_bp.route('/gallery')
 def gallery():
     if 'user_id' not in session: return redirect(url_for('auth.login'))
-    user_data = APIClient.get_user_by_id(session['user_id'])
-    user = User(**user_data)
+    user = UserService.get_user_by_id(session['user_id'])
     return render_template('gallery.html', vehicles=user.vehicles)
 
 @main_bp.route('/reviews', methods=['GET', 'POST'])
@@ -294,23 +263,16 @@ def reviews():
         rating = request.form.get('rating')
         comment = request.form.get('comment')
         
-        if not rating or not comment or not service_id:
-            flash('Por favor, proporcione una calificación, un comentario y seleccione un servicio.', 'error')
+        success, msg = ProductService.create_review(user_id, service_id, rating, comment)
+        if success:
+            flash(msg, 'success')
         else:
-            APIClient.create_review({
-                "user_id": user_id,
-                "service_id": service_id,
-                "rating": int(rating),
-                "comment": comment
-            })
-            flash('¡Reseña publicada con éxito!', 'success')
+            flash(msg, 'error')
         return redirect(url_for('main.reviews'))
 
-    reviews_data = APIClient.get_reviews()
-    all_reviews = [Review(**r) for r in reviews_data]
+    all_reviews = ProductService.get_reviews()
     
-    products_data = APIClient.get_products()
-    services = [Product(**p) for p in products_data if p['category'] == 'service']
+    services = ProductService.get_all_services()
     
     return render_template('reviews.html', reviews=all_reviews, services=services)
 
@@ -329,7 +291,7 @@ def upload_gallery():
         flash('Datos de subida incompletos.', 'error')
         return redirect(url_for('main.gallery'))
     
-    vehicle_data = APIClient.get(f"/vehicles/{vehicle_id}")
+    vehicle_data = get_vehicle(vehicle_id)
     if not vehicle_data or vehicle_data['user_id'] != session['user_id']:
         flash('Vehículo no encontrado o no autorizado.', 'error')
         return redirect(url_for('main.gallery'))
@@ -343,10 +305,7 @@ def upload_gallery():
             
         file.save(os.path.join(upload_path, filename))
         
-        APIClient.post("/gallery", {
-            "vehicle_id": vehicle_id,
-            "image_path": f"static/uploads/gallery/{filename}"
-        })
+        add_gallery_image(vehicle_id, f"static/uploads/gallery/{filename}")
         
         flash('¡Foto subida correctamente!', 'success')
         

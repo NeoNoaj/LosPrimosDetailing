@@ -21,3 +21,13 @@ def register_vehicle(user, plate, brand, model):
         return Vehicle(id=resp['id'], plate=plate, brand=brand, model=model, user_id=user.id)
     else:
         raise ValueError(resp.get('error', 'Error registrering vehicle'))
+
+def get_vehicle(vehicle_id):
+    vehicle_data = APIClient.get(f"/vehicles/{vehicle_id}")
+    return vehicle_data
+
+def add_gallery_image(vehicle_id, image_path):
+    return APIClient.post("/gallery", {
+        "vehicle_id": vehicle_id,
+        "image_path": image_path
+    })

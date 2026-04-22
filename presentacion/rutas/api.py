@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, request, session
 import requests
 import re
 from negocio.external_services import ExternalServices
-from persistencia.api_client import APIClient
+from negocio.product_service import ProductService
+from negocio.loyalty_service import LoyaltyService
 from datetime import datetime
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
@@ -44,9 +45,9 @@ def get_service_estimate():
     # Intentar obtener el precio real del producto
     base_price = 12000 # Default
     if service_id:
-        product = APIClient.get_product(service_id)
+        product = ProductService.get_product(service_id)
         if product:
-            base_price = product.get('price', base_price)
+            base_price = getattr(product, 'price', base_price)
     
     size_mult = {"sedan": 1.0, "suv": 1.3, "pickup": 1.5, "moto": 0.6}.get(data.get('size'), 1.0)
     dirt_mult = {"leve": 1.0, "moderada": 1.2, "extrema": 1.6}.get(data.get('dirt_level'), 1.0)
@@ -71,22 +72,9 @@ def get_user_loyalty():
     
     try:
         # Llamada al API Client (que ya llama al Web Service de Node.js)
-        history = APIClient.get(f"/user-history/{uid}")
-        if not history: return jsonify({"error": "No se encontró historial"}), 404
-        
-        total_spent = sum(t['amount'] for t in history.get('billing', []))
-        visit_count = len(history.get('services', []))
-        
-        tier = "BRONCE"
-        if visit_count >= 10: tier = "PLATINO"
-        elif visit_count >= 5: tier = "ORO"
-        elif visit_count >= 2: tier = "PLATA"
-        
-        return jsonify({
-            "estatus": tier,
-            "visitas_registradas": visit_count,
-            "beneficio_actual": f"{15 if tier == 'PLATINO' else 10 if tier == 'ORO' else 5 if tier == 'PLATA' else 0}% de descuento"
-        })
+        status_data, err = LoyaltyService.get_user_loyalty_status(uid)
+        if err: return jsonify({"error": err}), 404
+        return jsonify(status_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
