@@ -660,7 +660,8 @@ app.post('/api/payment-method', async (req, res) => {
         }
     } catch (err) {
         console.error('❌ Error completo en vinculación:', err.message);
-        res.status(500).json({ success: false, error: err.message });
+        const bankUrl = process.env.BANK_SERVICE_URL || 'https://practical-albattani.138-59-135-33.plesk.page/api';
+        res.status(500).json({ success: false, error: `${err.message} (URL intentada: ${bankUrl}/tarjetas/verificar)` });
     }
 });
 
