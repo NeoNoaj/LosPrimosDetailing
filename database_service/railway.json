@@ -1,0 +1,11 @@
+{
+  "name": "LosPrimosDetailing",
+  "version": "2.0.0",
+  "description": "Los Primos Detailing - Car Wash Management System",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "options": {
+    "node": "20"
+  }
+}

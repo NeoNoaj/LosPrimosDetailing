@@ -1,0 +1,11 @@
+{
+  "name": "LosPrimosDetailing",
+  "version": "2.0.0",
+  "description": "Los Primos Detailing - Web Application",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "options": {
+    "python": "3.11"
+  }
+}

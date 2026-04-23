@@ -2,7 +2,7 @@ import requests
 import os
 
 class APIClient:
-    BASE_URL = os.environ.get('DATABASE_SERVICE_URL')
+    BASE_URL = os.environ.get('DATABASE_SERVICE_URL') + '/api'
 
     @classmethod
     def get(cls, endpoint, params=None):

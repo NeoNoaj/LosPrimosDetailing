@@ -14,7 +14,7 @@ class ExternalServices:
         [REQ 5] Tipo de Cambio Adaptado (Node.js Proxy Blindado).
         """
         try:
-            url = "http://127.0.0.1:3000/api/tipo-cambio"
+            url = "https://database-service-production-77f4.up.railway.app/api/tipo-cambio"
             response = requests.get(url, timeout=4)
             data = response.json()
             if data.get('success'):
